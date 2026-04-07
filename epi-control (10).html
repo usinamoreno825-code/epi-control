@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<title>EPI Control</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<style>
+:root{
+  --bg:#0d0f14;--bg2:#141720;--bg3:#1c2030;--bg4:#242840;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
+  --text:#e8ecf4;--text2:#8a93b0;--text3:#505878;
+  --accent:#00e5a0;--accent-dim:rgba(0,229,160,0.12);--accent-dim2:rgba(0,229,160,0.06);
+  --danger:#ff5252;--danger-dim:rgba(255,82,82,0.12);
+  --warn:#ffa726;--warn-dim:rgba(255,167,38,0.12);
+  --info:#448aff;--info-dim:rgba(68,138,255,0.12);
+  --radius:10px;--radius2:16px;
+  --font:'IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius2);padding:32px;width:100%;max-width:360px}
+.logo-badge{width:40px;height:40px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-sm{width:30px;height:30px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 16px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header-right{display:flex;align-items:center;gap:6px}
+.clock{font-family:var(--mono);font-size:12px;color:var(--text3);background:var(--bg3);padding:4px 10px;border-radius:6px;border:1px solid var(--border)}
+.ubadge{font-family:var(--mono);font-size:11px;color:var(--accent);background:var(--accent-dim);padding:4px 10px;border-radius:6px;border:1px solid rgba(0,229,160,0.2)}
+
+.nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 12px;display:flex;overflow-x:auto}
+.nav::-webkit-scrollbar{height:0}
+.nb{padding:11px 12px;font-size:13px;font-weight:500;color:var(--text2);border:none;background:transparent;cursor:pointer;border-bottom:2px solid transparent;transition:.2s;white-space:nowrap;font-family:var(--font)}
+.nb:hover{color:var(--text)}.nb.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+.page{display:none;padding:16px;max-width:500px;margin:0 auto}
+.page.active{display:block}
+.page-wide{display:none;padding:16px}
+.page-wide.active{display:block}
+
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:16px;margin-bottom:12px}
+.card-sm{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:8px}
+.card-title{font-size:11px;color:var(--text3);font-family:var(--mono);letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px}
+
+input[type=text],input[type=password],input[type=date],select{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-family:var(--font);font-size:14px;width:100%;outline:none;transition:.2s}
+input:focus,select:focus{border-color:var(--accent)}
+input::placeholder{color:var(--text3)}
+label{font-size:12px;color:var(--text3);font-family:var(--mono);display:block;margin-bottom:6px;letter-spacing:.5px}
+.field{margin-bottom:14px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 20px;border-radius:var(--radius);font-size:14px;font-weight:500;font-family:var(--font);cursor:pointer;border:none;transition:.15s}
+.btn-p{background:var(--accent);color:#001a0e}.btn-p:hover{background:#00c889}
+.btn-p:disabled{background:var(--bg4);color:var(--text3);cursor:not-allowed}
+.btn-g{background:transparent;color:var(--text2);border:1px solid var(--border2)}.btn-g:hover{background:var(--bg3)}
+.btn-d{background:var(--danger-dim);color:var(--danger);border:1px solid rgba(255,82,82,.25)}
+.btn-full{width:100%}.btn-sm{padding:7px 14px;font-size:12px}
+
+.avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex-shrink:0;font-family:var(--mono)}
+.av-g{background:rgba(0,229,160,.15);color:var(--accent)}.av-b{background:rgba(68,138,255,.15);color:var(--info)}
+.av-o{background:rgba(255,167,38,.15);color:var(--warn)}.av-r{background:rgba(255,82,82,.15);color:var(--danger)}
+.av-p{background:rgba(179,136,255,.15);color:#b388ff}
+
+.epi-check{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:11px 14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px}
+.epi-check.checked{background:var(--accent-dim2);border-color:rgba(0,229,160,.3)}
+.chk{width:20px;height:20px;border:1.5px solid var(--border2);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
+.epi-check.checked .chk{background:var(--accent);border-color:var(--accent)}
+.chk-ic{display:none;width:12px;height:12px}.epi-check.checked .chk-ic{display:block}
+
+/* CÂMERA */
+.cam-wrap{background:#000;border-radius:var(--radius);overflow:hidden;aspect-ratio:4/3;position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.cam-wrap video,.cam-wrap canvas{width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0}
+.cam-snap{width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;display:none}
+.cam-ph{display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px;position:relative;z-index:2}
+.cam-ph svg{opacity:.3}.cam-ph span{font-size:13px;color:var(--text3)}
+
+/* OVAL guia */
+.face-oval-wrap{position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none;z-index:3}
+.face-oval{width:140px;height:180px;border:3px solid var(--accent);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+
+/* STATUS facial */
+.face-bar{position:absolute;bottom:0;left:0;right:0;padding:8px 14px;font-family:var(--mono);font-size:13px;font-weight:600;text-align:center;z-index:4;transition:.3s}
+.face-bar.scan{background:rgba(255,167,38,.85);color:#2a1a00}
+.face-bar.ok{background:rgba(0,229,160,.9);color:#001a0e}
+.face-bar.err{background:rgba(255,82,82,.85);color:#2a0000}
+.face-bar.idle{display:none}
+
+/* Identificado */
+.id-card{background:var(--bg2);border:2px solid var(--accent);border-radius:var(--radius2);padding:16px;margin-bottom:12px;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;font-family:var(--mono)}
+.b-g{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(0,229,160,.2)}
+.b-r{background:var(--danger-dim);color:var(--danger);border:1px solid rgba(255,82,82,.2)}
+.b-w{background:var(--warn-dim);color:var(--warn);border:1px solid rgba(255,167,38,.2)}
+.b-b{background:var(--info-dim);color:var(--info);border:1px solid rgba(68,138,255,.2)}
+.b-gray{background:var(--bg4);color:var(--text3);border:1px solid var(--border)}
+
+.hist-item{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;transition:.15s}
+.hist-item:hover{border-color:var(--accent)}
+.hist-photo{width:44px;height:44px;border-radius:8px;object-fit:cover;border:1px solid var(--border2);flex-shrink:0}
+.hist-ph{width:44px;height:44px;border-radius:8px;background:var(--bg4);border:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text3);font-family:var(--mono);text-align:center}
+
+.pend-item{background:var(--danger-dim);border:1px solid rgba(255,82,82,.2);border-radius:var(--radius);padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.adm-item{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+
+.dash-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.dash-stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius2);padding:14px}
+.dash-val{font-size:28px;font-weight:600;font-family:var(--mono);line-height:1;margin-bottom:4px}
+.dash-lbl{font-size:12px;color:var(--text3)}
+.bar-wrap{display:flex;align-items:flex-end;gap:5px;height:80px;margin-top:8px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.bar{width:100%;background:var(--accent-dim);border-radius:4px 4px 0 0;min-height:4px}
+.bar.hl{background:rgba(0,229,160,.5)}
+.bar-lbl{font-size:10px;color:var(--text3);font-family:var(--mono)}
+
+.rtable{width:100%;border-collapse:collapse;font-size:13px}
+.rtable th{text-align:left;padding:8px 10px;font-family:var(--mono);font-size:11px;color:var(--text3);border-bottom:1px solid var(--border);font-weight:500}
+.rtable td{padding:9px 10px;border-bottom:1px solid var(--border);color:var(--text2)}
+.rtable tr:last-child td{border-bottom:none}.rtable tr:hover td{background:var(--bg3)}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius2);padding:20px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:500;margin-bottom:16px}
+.modal-foot{display:flex;gap:8px;margin-top:16px}
+
+.suc-icon{width:68px;height:68px;border-radius:50%;background:var(--accent-dim);border:2px solid rgba(0,229,160,.4);display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.spinner{width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.loading-overlay{position:fixed;inset:0;background:rgba(13,15,20,.95);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.loading-overlay .spinner{width:36px;height:36px;border-width:3px}
+
+.toast-wrap{position:fixed;bottom:20px;right:20px;z-index:300;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:11px 15px;font-size:13px;display:flex;align-items:center;gap:10px;animation:slideIn .2s ease;max-width:300px}
+.toast.ok{border-color:rgba(0,229,160,.3);background:rgba(0,229,160,.08)}
+.toast.err{border-color:rgba(255,82,82,.3);background:rgba(255,82,82,.08)}
+.toast.warn{border-color:rgba(255,167,38,.3);background:rgba(255,167,38,.08)}
+@keyframes slideIn{from{transform:translateX(30px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+.venc-badge{font-size:10px;padding:2px 7px;border-radius:10px;font-family:var(--mono);white-space:nowrap}
+.venc-ok{background:transparent;color:var(--text3);border:1px solid var(--border)}
+.venc-alerta{background:var(--warn-dim);color:var(--warn);border:1px solid rgba(255,167,38,.3)}
+.venc-vencido{background:var(--danger-dim);color:var(--danger);border:1px solid rgba(255,82,82,.3)}
+.alerta-box{background:var(--warn-dim);border:1px solid rgba(255,167,38,.35);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="ia-loading">
+  <div class="spinner"></div>
+  <div style="font-family:var(--mono);font-size:13px;color:var(--text2)">Carregando reconhecimento facial...</div>
+  <div style="font-family:var(--mono);font-size:11px;color:var(--text3)" id="ia-prog">Aguarde</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen" class="login-wrap" style="display:none">
+  <div class="login-card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px">
+      <div class="logo-badge"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#001a0e" stroke-width="2.5" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>
+      <div><div style="font-size:20px;font-weight:600">EPI Control</div><div style="font-size:13px;color:var(--text3);font-family:var(--mono)">Identificação facial</div></div>
+    </div>
+    <div class="field"><label>USUÁRIO</label><input type="text" id="l-user" value="admin" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+    <div class="field"><label>SENHA</label><input type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+    <div id="l-err" style="font-size:13px;color:var(--danger);margin-bottom:12px;min-height:18px;font-family:var(--mono)"></div>
+    <button class="btn btn-p btn-full" onclick="doLogin()">Entrar</button>
+    <div style="background:var(--bg3);border-radius:var(--radius);padding:10px 14px;margin-top:14px">
+      <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px">CREDENCIAIS</div>
+      <div style="font-size:13px;color:var(--text2);cursor:pointer;margin-bottom:4px" onclick="document.getElementById('l-user').value='admin';document.getElementById('l-pass').value='admin123'">👤 <b style="color:var(--text)">admin</b> / admin123 <span style="font-size:11px;color:var(--accent)">(clique)</span></div>
+      <div style="font-size:13px;color:var(--text2);cursor:pointer" onclick="document.getElementById('l-user').value='operador';document.getElementById('l-pass').value='op123'">👤 <b style="color:var(--text)">operador</b> / op123 <span style="font-size:11px;color:var(--accent)">(clique)</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:10px;cursor:pointer" onclick="showPage('pg-reg')">
+      <div class="logo-sm"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#001a0e" stroke-width="2.5" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>
+      <span style="font-family:var(--mono);font-size:13px;font-weight:600">EPI CONTROL</span>
+    </div>
+    <div class="header-right">
+      <div class="clock" id="clock">--:--</div>
+      <div class="ubadge" id="ubadge"></div>
+      <button class="btn btn-g btn-sm" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+  <nav class="nav">
+    <button class="nb active" onclick="showPage('pg-reg')">Registro</button>
+    <button class="nb" onclick="showPage('pg-hist')">Histórico</button>
+    <button class="nb" onclick="showPage('pg-pend')">Pendentes <span id="pend-badge"></span></button>
+    <button class="nb" onclick="showPage('pg-dash')">Dashboard</button>
+    <button class="nb" id="nb-adm" onclick="showPage('pg-adm')" style="display:none">Admin</button>
+  </nav>
+
+  <!-- REGISTRO -->
+  <div class="page active" id="pg-reg">
+
+    <!-- STEP 1: identificação facial -->
+    <div id="s-identificar">
+      <div id="alerta-venc" style="display:none"></div>
+
+      <div class="card">
+        <div class="card-title">Identificação facial automática</div>
+        <div style="font-size:13px;color:var(--text3);margin-bottom:12px">Aponte o rosto para a câmera. O sistema identifica o colaborador automaticamente.</div>
+
+        <div class="cam-wrap" id="cam-id-wrap" style="height:260px">
+          <video id="vid-id" autoplay playsinline muted style="display:none"></video>
+          <canvas id="cnv-id" style="display:none"></canvas>
+          <div class="cam-ph" id="ph-id">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="white" stroke-width="1.5"><circle cx="24" cy="20" r="8"/><path d="M9 40c2-8 8-13 15-13s13 5 15 13"/><rect x="4" y="4" width="8" height="3" rx="1.5"/><rect x="4" y="4" width="3" height="8" rx="1.5"/><rect x="36" y="4" width="8" height="3" rx="1.5"/><rect x="41" y="4" width="3" height="8" rx="1.5"/><rect x="4" y="36" width="3" height="8" rx="1.5"/><rect x="4" y="41" width="8" height="3" rx="1.5"/><rect x="41" y="36" width="3" height="8" rx="1.5"/><rect x="36" y="41" width="8" height="3" rx="1.5"/></svg>
+            <span>Câmera inativa</span>
+          </div>
+          <div class="face-oval-wrap" id="oval-id"><div class="face-oval"></div></div>
+          <div class="face-bar idle" id="bar-id"></div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button class="btn btn-p btn-full" id="btn-iniciar" onclick="iniciarIdentificacao()">Iniciar câmera</button>
+          <button class="btn btn-g btn-full" id="btn-parar" onclick="pararIdentificacao()" style="display:none">Parar</button>
+        </div>
+        <div style="font-size:12px;color:var(--text3);text-align:center;font-family:var(--mono)" id="id-status">Aguardando início</div>
+      </div>
+
+      <!-- busca manual como fallback -->
+      <div class="card">
+        <div class="card-title">Ou buscar manualmente</div>
+        <div class="field"><input type="text" id="busca-inp" placeholder="Matrícula ou nome..." oninput="buscar(this.value)" autocomplete="off"/></div>
+        <div id="busca-res"></div>
+      </div>
+
+      <div class="card" style="background:var(--accent-dim2);border-color:rgba(0,229,160,.1)">
+        <div class="card-title">Registros recentes</div>
+        <div id="recent-list"></div>
+      </div>
+    </div>
+
+    <!-- STEP 2: EPIs + confirmação -->
+    <div id="s-epi" style="display:none">
+      <div class="id-card" id="wk-hdr"></div>
+
+      <div class="card">
+        <div class="card-title">EPIs obrigatórios</div>
+        <div id="epi-list"></div>
+        <div id="epi-prog" style="font-size:12px;color:var(--text3);font-family:var(--mono);margin-top:8px"></div>
+      </div>
+
+      <!-- foto comprovante -->
+      <div class="card">
+        <div class="card-title">Foto comprovante (opcional)</div>
+        <div class="cam-wrap" id="cam-foto-wrap" style="height:200px">
+          <video id="vid-foto" autoplay playsinline muted style="display:none"></video>
+          <canvas id="cnv-foto" style="display:none"></canvas>
+          <img class="cam-snap" id="img-foto" style="display:none"/>
+          <div class="cam-ph" id="ph-foto">
+            <svg width="36" height="36" viewBox="0 0 48 48" fill="none" stroke="white" stroke-width="1.5"><circle cx="24" cy="20" r="8"/><path d="M9 40c2-8 8-13 15-13s13 5 15 13"/></svg>
+            <span style="font-size:12px">Opcional</span>
+          </div>
+        </div>
+        <input type="file" id="file-foto" accept="image/*" capture="user" style="display:none" onchange="fotoArquivo(this)"/>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-g btn-full btn-sm" id="btn-foto-cam" onclick="toggleFotoCam()">Abrir câmera</button>
+          <button class="btn btn-g btn-full btn-sm" id="btn-foto-cap" onclick="capturarFoto()" style="display:none">Capturar</button>
+          <button class="btn btn-g btn-full btn-sm" onclick="document.getElementById('file-foto').click()">📷 Celular</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-bottom:20px">
+        <button class="btn btn-g" onclick="voltarIdentificar()">← Voltar</button>
+        <button class="btn btn-p btn-full" id="btn-conf" onclick="confirmar()" disabled>Confirmar retirada</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: sucesso -->
+    <div id="s-suc" style="display:none">
+      <div class="card" style="text-align:center;padding:20px">
+        <div class="suc-icon"><svg width="34" height="34" viewBox="0 0 34 34" fill="none"><path d="M7 17l7 7L27 9" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div style="font-size:20px;font-weight:600;color:var(--accent);margin-bottom:4px" id="suc-nm"></div>
+        <div style="font-size:13px;color:var(--text3);font-family:var(--mono)" id="suc-tm"></div>
+        <div style="margin:14px 0" id="suc-foto-el"></div>
+        <div class="card-sm" style="text-align:left" id="suc-epis"></div>
+        <div style="margin-top:10px;padding:10px 12px;background:var(--bg3);border-radius:var(--radius);font-family:var(--mono);font-size:11px;color:var(--text3);word-break:break-all" id="suc-hash"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:20px">
+        <button class="btn btn-g btn-full" onclick="showPage('pg-hist')">Ver histórico</button>
+        <button class="btn btn-p btn-full" onclick="novoReg()">Novo registro</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTÓRICO -->
+  <div class="page" id="pg-hist" style="max-width:600px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:16px;font-weight:500">Histórico</div>
+      <button class="btn btn-g btn-sm" onclick="exportCSV()">↓ CSV</button>
+    </div>
+    <div class="card" style="padding:12px">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
+        <div style="flex:1;min-width:110px"><label>DE</label><input type="date" id="hist-de" onchange="renderHist()"/></div>
+        <div style="flex:1;min-width:110px"><label>ATÉ</label><input type="date" id="hist-ate" onchange="renderHist()"/></div>
+        <div style="flex:2;min-width:150px"><label>NOME</label><input type="text" id="hist-nome" placeholder="Filtrar..." oninput="renderHist()"/></div>
+        <button class="btn btn-g btn-sm" onclick="limparFiltros()">Limpar</button>
+      </div>
+    </div>
+    <div id="hist-count" style="font-size:12px;color:var(--text3);font-family:var(--mono);margin-bottom:10px"></div>
+    <div id="hist-lista"></div>
+  </div>
+
+  <!-- PENDENTES -->
+  <div class="page" id="pg-pend">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:16px;font-weight:500">Pendentes hoje</div>
+      <button class="btn btn-g btn-sm" onclick="toast('Alertas enviados!','ok')">Alertar todos</button>
+    </div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:14px;padding:10px 14px;background:var(--bg3);border-radius:var(--radius)">
+      Colaboradores que <b style="color:var(--warn)">ainda não retiraram EPIs hoje</b>.
+    </div>
+    <div id="pend-lista"></div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="page-wide" id="pg-dash">
+    <div style="font-size:16px;font-weight:500;margin-bottom:14px">Dashboard</div>
+    <div class="dash-grid" id="dash-stats"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div class="card"><div class="card-title">Últimos 7 dias</div><div class="bar-wrap" id="chart-dias"></div></div>
+      <div class="card"><div class="card-title">EPIs mais retirados</div><div id="chart-epis" style="margin-top:8px"></div></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="card-title" style="margin:0">Registros</div>
+        <button class="btn btn-g btn-sm" onclick="exportCSV()">↓ CSV</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="rtable"><thead><tr><th>Colaborador</th><th>Data/Hora</th><th>Função</th><th>EPIs</th><th>Foto</th></tr></thead>
+        <tbody id="dash-tbody"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div class="page" id="pg-adm" style="max-width:600px">
+    <div style="font-size:16px;font-weight:500;margin-bottom:14px">Administração</div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="card-title" style="margin:0">Colaboradores e faciais</div>
+        <button class="btn btn-g btn-sm" onclick="openModal('m-wk')">+ Adicionar</button>
+      </div>
+      <div id="adm-wk"></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="card-title" style="margin:0">Usuários</div>
+        <button class="btn btn-g btn-sm" onclick="openModal('m-usr')">+ Usuário</button>
+      </div>
+      <div id="adm-usr"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">EPIs e vencimentos</div>
+      <div id="adm-epis"></div>
+    </div>
+    <div class="card" style="background:var(--danger-dim);border-color:rgba(255,82,82,.2)">
+      <div class="card-title" style="color:var(--danger)">Zona de perigo</div>
+      <button class="btn btn-d btn-sm" onclick="limparRegs()">Limpar registros</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="m-wk">
+  <div class="modal">
+    <div class="modal-title">Novo colaborador</div>
+    <div class="field"><label>NOME</label><input type="text" id="nw-nm" placeholder="João da Silva"/></div>
+    <div class="field"><label>MATRÍCULA</label><input type="text" id="nw-mt" placeholder="00001"/></div>
+    <div class="field"><label>FUNÇÃO</label>
+      <select id="nw-fn"><option>Produção</option><option>Manutenção</option><option>Logística</option><option>Elétrica</option><option>Químico</option><option>Construção</option><option>Soldagem</option></select>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-g" onclick="closeModal('m-wk')">Cancelar</button>
+      <button class="btn btn-p" onclick="salvarWk()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CADASTRO FACIAL -->
+<div class="modal-overlay" id="m-facial">
+  <div class="modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div class="modal-title" style="margin:0" id="m-fac-titulo">Cadastrar facial</div>
+      <button onclick="fecharFacial()" style="background:transparent;border:none;color:var(--text3);font-size:24px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Tire uma foto do rosto do colaborador para cadastrar a identificação facial.</div>
+
+    <!-- Preview da foto -->
+    <div id="cad-preview-wrap" style="display:none;margin-bottom:14px;text-align:center">
+      <img id="cad-prev-img" style="width:100%;max-height:260px;object-fit:cover;border-radius:var(--radius);border:2px solid var(--accent)"/>
+      <div id="cad-msg" style="font-size:12px;font-family:var(--mono);margin-top:8px;min-height:16px"></div>
+    </div>
+
+    <!-- Placeholder quando não tem foto -->
+    <div id="cad-empty" style="background:var(--bg3);border-radius:var(--radius);aspect-ratio:4/3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;margin-bottom:14px;border:1px dashed var(--border2)">
+      <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="white" stroke-width="1.2" opacity=".3"><circle cx="24" cy="20" r="8"/><path d="M9 40c2-8 8-13 15-13s13 5 15 13"/><rect x="4" y="4" width="8" height="3" rx="1.5"/><rect x="4" y="4" width="3" height="8" rx="1.5"/><rect x="36" y="4" width="8" height="3" rx="1.5"/><rect x="41" y="4" width="3" height="8" rx="1.5"/><rect x="4" y="36" width="3" height="8" rx="1.5"/><rect x="4" y="41" width="8" height="3" rx="1.5"/><rect x="41" y="36" width="3" height="8" rx="1.5"/><rect x="36" y="41" width="8" height="3" rx="1.5"/></svg>
+      <span style="font-size:13px;color:var(--text3)">Nenhuma foto capturada</span>
+    </div>
+
+    <!-- inputs ocultos -->
+    <input type="file" id="cad-file-cam"    accept="image/*" capture="user"        style="display:none" onchange="cadFotoSelecionada(this)"/>
+    <input type="file" id="cad-file-galeria" accept="image/*"                       style="display:none" onchange="cadFotoSelecionada(this)"/>
+
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="btn btn-p btn-full" onclick="document.getElementById('cad-file-cam').click()" style="font-size:14px">
+        📷 Abrir câmera
+      </button>
+      <button class="btn btn-g btn-full" onclick="document.getElementById('cad-file-galeria').click()" style="font-size:13px">
+        🖼 Galeria
+      </button>
+    </div>
+    <div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:12px;font-family:var(--mono)">
+      Toque em "Abrir câmera" e aponte para o rosto do colaborador
+    </div>
+
+    <div id="cad-preview-extra" style="display:none;margin-bottom:12px">
+      <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px">FACIAL QUE SERÁ SALVA</div>
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn btn-g" onclick="fecharFacial()">Cancelar</button>
+      <button class="btn btn-p" id="cad-salvar" onclick="salvarFacial()" disabled>Salvar facial</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="m-usr">
+  <div class="modal">
+    <div class="modal-title">Novo usuário</div>
+    <div class="field"><label>USUÁRIO</label><input type="text" id="nu-u" placeholder="operador2"/></div>
+    <div class="field"><label>SENHA</label><input type="password" id="nu-p" placeholder="mínimo 6 caracteres"/></div>
+    <div class="field"><label>PERFIL</label><select id="nu-r"><option value="operator">Operador</option><option value="admin">Administrador</option></select></div>
+    <div class="modal-foot">
+      <button class="btn btn-g" onclick="closeModal('m-usr')">Cancelar</button>
+      <button class="btn btn-p" onclick="salvarUsr()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="m-reg">
+  <div class="modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="modal-title" id="m-reg-titulo" style="margin:0"></div>
+      <button onclick="closeModal('m-reg')" style="background:transparent;border:none;color:var(--text3);font-size:24px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div id="m-reg-body"></div>
+    <button class="btn btn-g btn-full" onclick="closeModal('m-reg')" style="margin-top:8px">Fechar</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="m-foto">
+  <div class="modal" style="text-align:center">
+    <div class="modal-title" id="m-foto-tit"></div>
+    <img id="m-foto-img" src="" style="width:100%;border-radius:var(--radius);margin-bottom:14px"/>
+    <button class="btn btn-g btn-full" onclick="closeModal('m-foto')">Fechar</button>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+// ===================== DB =====================
+const KEY = 'epicontrol_v9';
+function genId() { return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function genHash(s) { let h=0; for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;} return 'EPI:'+Math.abs(h).toString(16).toUpperCase().padStart(8,'0')+'-'+Date.now().toString(36).toUpperCase(); }
+function dtVenc(d) { const x=new Date(); x.setDate(x.getDate()+d); return x.toISOString().slice(0,10); }
+function vencStatus(v) {
+  if (!v) return null;
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const dv=new Date(v+'T00:00:00');
+  const d=Math.round((dv-hoje)/86400000);
+  if (d<0)  return {status:'vencido',label:'Vencido há '+Math.abs(d)+'d',cls:'venc-vencido'};
+  if (d<=7) return {status:'alerta', label:'Vence em '+d+'d',            cls:'venc-alerta'};
+  return         {status:'ok',     label:'Vence em '+d+'d',            cls:'venc-ok'};
+}
+
+function initDB() {
+  const now=Date.now();
+  const db={
+    users:[
+      {id:'u1',username:'admin',   pw:'admin123',role:'admin'},
+      {id:'u2',username:'operador',pw:'op123',   role:'operator'},
+    ],
+    workers:[
+      {id:'w1',mat:'00101',name:'Carlos Souza',  fn:'Produção',  ini:'CS',cor:'av-g',ativo:true,facial:null},
+      {id:'w2',mat:'00234',name:'Ana Lima',      fn:'Manutenção',ini:'AL',cor:'av-b',ativo:true,facial:null},
+      {id:'w3',mat:'00312',name:'João Ferreira', fn:'Logística', ini:'JF',cor:'av-o',ativo:true,facial:null},
+      {id:'w4',mat:'00450',name:'Maria Oliveira',fn:'Químico',   ini:'MO',cor:'av-r',ativo:true,facial:null},
+      {id:'w5',mat:'00521',name:'Pedro Alves',   fn:'Elétrica',  ini:'PA',cor:'av-p',ativo:true,facial:null},
+      {id:'w6',mat:'00615',name:'Fernanda Costa',fn:'Soldagem',  ini:'FC',cor:'av-b',ativo:true,facial:null},
+    ],
+    epis:{
+      'Produção':  [{n:'Capacete',ca:'CA-31469',venc:dtVenc(120)},{n:'Luvas de proteção',ca:'CA-14529',venc:dtVenc(5)},{n:'Óculos de segurança',ca:'CA-15943',venc:dtVenc(90)},{n:'Bota de segurança',ca:'CA-28777',venc:dtVenc(3)}],
+      'Manutenção':[{n:'Capacete',ca:'CA-31469',venc:dtVenc(60)},{n:'Protetor auricular',ca:'CA-10460',venc:dtVenc(6)},{n:'Luvas de vaqueta',ca:'CA-34567',venc:dtVenc(180)},{n:'Bota de segurança',ca:'CA-28777',venc:dtVenc(45)}],
+      'Logística': [{n:'Colete refletivo',ca:'CA-43210',venc:dtVenc(30)},{n:'Bota de segurança',ca:'CA-28777',venc:dtVenc(200)},{n:'Luvas de proteção',ca:'CA-14529',venc:dtVenc(4)}],
+      'Elétrica':  [{n:'Capacete classe B',ca:'CA-32100',venc:dtVenc(90)},{n:'Luvas isolantes',ca:'CA-11233',venc:dtVenc(7)},{n:'Óculos de segurança',ca:'CA-15943',venc:dtVenc(150)},{n:'Bota dielétrica',ca:'CA-44521',venc:dtVenc(365)}],
+      'Químico':   [{n:'Máscara respiratória',ca:'CA-22100',venc:dtVenc(2)},{n:'Óculos de segurança',ca:'CA-15943',venc:dtVenc(90)},{n:'Luvas nitrílicas',ca:'CA-18700',venc:dtVenc(15)},{n:'Avental de PVC',ca:'CA-33211',venc:dtVenc(180)}],
+      'Construção':[{n:'Capacete',ca:'CA-31469',venc:dtVenc(120)},{n:'Cinto de segurança',ca:'CA-55102',venc:dtVenc(6)},{n:'Bota de segurança',ca:'CA-28777',venc:dtVenc(90)},{n:'Luvas de raspa',ca:'CA-20400',venc:dtVenc(30)}],
+      'Soldagem':  [{n:'Máscara de solda',ca:'CA-10201',venc:dtVenc(60)},{n:'Luvas de raspa',ca:'CA-20400',venc:dtVenc(5)},{n:'Avental de couro',ca:'CA-30901',venc:dtVenc(365)},{n:'Bota de segurança',ca:'CA-28777',venc:dtVenc(90)}],
+    },
+    regs:[
+      {id:genId(),wid:'w1',wn:'Carlos Souza',  wf:'Produção',  wi:'CS',wc:'av-g',epis:['Capacete','Luvas de proteção','Óculos de segurança','Bota de segurança'],foto:null,hash:'EPI:DEMO001',ts:now-3600000*5},
+      {id:genId(),wid:'w2',wn:'Ana Lima',      wf:'Manutenção',wi:'AL',wc:'av-b',epis:['Capacete','Protetor auricular','Luvas de vaqueta','Bota de segurança'],  foto:null,hash:'EPI:DEMO002',ts:now-3600000*4},
+      {id:genId(),wid:'w3',wn:'João Ferreira', wf:'Logística', wi:'JF',wc:'av-o',epis:['Colete refletivo','Bota de segurança','Luvas de proteção'],              foto:null,hash:'EPI:DEMO003',ts:now-3600000*3},
+    ],
+  };
+  save(db); return db;
+}
+
+function load() { try { const d=localStorage.getItem(KEY); return d?JSON.parse(d):initDB(); } catch { return initDB(); } }
+function save(db) { localStorage.setItem(KEY,JSON.stringify(db)); }
+
+// ===================== FACE-API =====================
+let faceReady=false;
+const THRESHOLD=0.48;
+
+async function loadModels() {
+  const prog=document.getElementById('ia-prog');
+  const done=(ok)=>{
+    faceReady=ok;
+    document.getElementById('ia-loading').style.display='none';
+    document.getElementById('login-screen').style.display='flex';
+    try { const s=sessionStorage.getItem('epi_me'); if(s){ME=JSON.parse(s);startApp();} } catch {}
+  };
+
+  // Timeout de 10s — se demorar demais, passa direto
+  const timer=setTimeout(()=>{
+    prog.textContent='Tempo esgotado. Continuando sem IA.';
+    done(false);
+  }, 10000);
+
+  try {
+    const URL='https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights';
+    prog.textContent='Carregando detector de faces...';
+    await faceapi.nets.tinyFaceDetector.loadFromUri(URL);
+    prog.textContent='Landmarks faciais...';
+    await faceapi.nets.faceLandmark68TinyNet.loadFromUri(URL);
+    prog.textContent='Reconhecimento facial...';
+    await faceapi.nets.faceRecognitionNet.loadFromUri(URL);
+    clearTimeout(timer);
+    prog.textContent='✓ Pronto!';
+    setTimeout(()=>done(true), 400);
+  } catch {
+    clearTimeout(timer);
+    prog.textContent='Sem conexão — modo offline ativado.';
+    setTimeout(()=>done(false), 1000);
+  }
+}
+
+async function getEmb(el) {
+  if (!faceReady) return null;
+  try {
+    const opts=new faceapi.TinyFaceDetectorOptions({inputSize:224,scoreThreshold:0.3});
+    const r=await faceapi.detectSingleFace(el,opts).withFaceLandmarks(true).withFaceDescriptor();
+    return r?Array.from(r.descriptor):null;
+  } catch { return null; }
+}
+
+function cosine(a,b) {
+  if (!a||!b||a.length!==b.length) return 0;
+  let dot=0,na=0,nb=0;
+  for(let i=0;i<a.length;i++){dot+=a[i]*b[i];na+=a[i]*a[i];nb+=b[i]*b[i];}
+  return dot/(Math.sqrt(na)*Math.sqrt(nb));
+}
+
+// Identifica colaborador a partir de um embedding
+function identificarPorEmb(emb) {
+  const db=load();
+  let best=null, bestSim=0;
+  db.workers.forEach(w=>{
+    if (!w.facial||!w.facial.embedding) return;
+    const sim=cosine(emb, w.facial.embedding);
+    if (sim>bestSim) { bestSim=sim; best=w; }
+  });
+  return bestSim>=THRESHOLD ? {worker:best, sim:Math.round(bestSim*100)} : null;
+}
+
+// ===================== AUTH =====================
+let ME=null;
+
+function doLogin() {
+  const u=document.getElementById('l-user').value.trim();
+  const p=document.getElementById('l-pass').value;
+  const user=load().users.find(x=>x.username===u&&x.pw===p);
+  if (!user) { document.getElementById('l-err').textContent='Usuário ou senha incorretos'; return; }
+  ME=user; sessionStorage.setItem('epi_me',JSON.stringify(ME)); startApp();
+}
+
+function doLogout() {
+  ME=null; sessionStorage.removeItem('epi_me');
+  pararIdentificacao(); pararFotoCam();
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('l-pass').value='';
+  document.getElementById('l-err').textContent='';
+}
+
+function startApp() {
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('ubadge').textContent=ME.username+' · '+ME.role;
+  if (ME.role==='admin') document.getElementById('nb-adm').style.display='block';
+  showPage('pg-reg');
+  renderRecent(); checkAlertas(); updatePendBadge();
+  setInterval(updateClock,1000); updateClock();
+}
+
+function updateClock() { document.getElementById('clock').textContent=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+
+// ===================== NAVEGAÇÃO =====================
+function showPage(id) {
+  document.querySelectorAll('.page,.page-wide').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  ['pg-reg','pg-hist','pg-pend','pg-dash','pg-adm'].forEach((p,i)=>{ if(p===id) document.querySelectorAll('.nb')[i]?.classList.add('active'); });
+  if (id==='pg-reg')  { renderRecent(); checkAlertas(); }
+  if (id==='pg-hist') { const h=new Date().toISOString().slice(0,10); if(!document.getElementById('hist-de').value) document.getElementById('hist-de').value=h; if(!document.getElementById('hist-ate').value) document.getElementById('hist-ate').value=h; renderHist(); }
+  if (id==='pg-pend') renderPend();
+  if (id==='pg-dash') renderDash();
+  if (id==='pg-adm')  renderAdm();
+}
+
+// ===================== ALERTAS VENCIMENTO =====================
+function checkAlertas() {
+  const db=load(), crit=[];
+  Object.entries(db.epis).forEach(([fn,l])=>l.forEach(e=>{const vs=vencStatus(e.venc);if(vs&&vs.status!=='ok')crit.push({fn,nome:e.n,vs});}));
+  const el=document.getElementById('alerta-venc');
+  if (!crit.length) { el.style.display='none'; return; }
+  el.style.display='block';
+  el.innerHTML=`<div class="alerta-box">
+    <div style="font-size:12px;font-weight:600;color:var(--warn);font-family:var(--mono);margin-bottom:8px">⚠ ${crit.length} EPI(s) com vencimento próximo ou vencido</div>
+    ${crit.map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,167,38,.15)"><div><span style="font-size:13px;color:var(--text)">${c.nome}</span><span style="font-size:11px;color:var(--text3);margin-left:6px;font-family:var(--mono)">${c.fn}</span></div><span class="venc-badge ${c.vs.cls}">${c.vs.label}</span></div>`).join('')}
+    <div style="margin-top:8px;font-size:12px;color:var(--text3)">Acesse <b style="color:var(--text)">Admin → EPIs</b> para renovar.</div>
+  </div>`;
+}
+
+// ===================== IDENTIFICAÇÃO AUTOMÁTICA =====================
+let idStream=null, idLoop=null, idScanning=false;
+
+async function iniciarIdentificacao() {
+  try {
+    idStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}}});
+    const v=document.getElementById('vid-id');
+    v.srcObject=idStream; v.style.display='block';
+    document.getElementById('ph-id').style.display='none';
+    document.getElementById('oval-id').style.display='flex';
+    document.getElementById('btn-iniciar').style.display='none';
+    document.getElementById('btn-parar').style.display='block';
+    setBarId('scan','Aproxime o rosto...');
+    // Loop de detecção a cada 1.2s
+    idLoop=setInterval(scanFrame,1200);
+  } catch(e) {
+    document.getElementById('id-status').textContent='Câmera indisponível. Use a busca manual abaixo.';
+    toast('Câmera indisponível. Use a busca manual.','warn');
+  }
+}
+
+function pararIdentificacao() {
+  clearInterval(idLoop); idLoop=null;
+  if (idStream) { idStream.getTracks().forEach(t=>t.stop()); idStream=null; }
+  document.getElementById('vid-id').style.display='none';
+  document.getElementById('ph-id').style.display='flex';
+  document.getElementById('oval-id').style.display='none';
+  setBarId('idle','');
+  document.getElementById('btn-iniciar').style.display='block';
+  document.getElementById('btn-parar').style.display='none';
+  document.getElementById('id-status').textContent='Câmera parada';
+}
+
+function setBarId(type, txt) {
+  const el=document.getElementById('bar-id');
+  el.className='face-bar '+type;
+  el.textContent=txt;
+  document.getElementById('id-status').textContent=txt;
+}
+
+async function scanFrame() {
+  if (idScanning) return;
+  const v=document.getElementById('vid-id');
+  if (!v||!idStream) return;
+  idScanning=true;
+
+  if (!faceReady) {
+    setBarId('scan','Reconhecimento não disponível (offline)');
+    idScanning=false; return;
+  }
+
+  setBarId('scan','Analisando...');
+  const emb=await getEmb(v);
+  if (!emb) {
+    setBarId('scan','Aproxime o rosto...');
+    idScanning=false; return;
+  }
+
+  const res=identificarPorEmb(emb);
+  if (res) {
+    // Identificado!
+    clearInterval(idLoop); idLoop=null;
+    setBarId('ok','✓ '+res.worker.name+' ('+res.sim+'%)');
+    await new Promise(r=>setTimeout(r,800));
+    pararIdentificacao();
+    selecionarWk(res.worker.id);
+  } else {
+    setBarId('err','Rosto não reconhecido — continue tentando');
+    setTimeout(()=>setBarId('scan','Aproxime o rosto...'),1500);
+  }
+  idScanning=false;
+}
+
+// ===================== BUSCA MANUAL =====================
+function buscar(q) {
+  const el=document.getElementById('busca-res');
+  if (!q.trim()) { el.innerHTML=''; return; }
+  const db=load();
+  const found=db.workers.filter(w=>w.ativo&&(w.name.toLowerCase().includes(q.toLowerCase())||w.mat.includes(q)));
+  if (!found.length) { el.innerHTML='<div style="font-size:13px;color:var(--text3);padding:8px 0">Nenhum colaborador.</div>'; return; }
+  el.innerHTML=found.map(w=>`
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:11px 14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px" onclick="selecionarWk('${w.id}')" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor=''">
+      ${w.facial?`<img src="${w.facial.foto}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);flex-shrink:0"/>`:`<div class="avatar ${w.cor}" style="width:36px;height:36px;font-size:12px">${w.ini}</div>`}
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:500;font-size:14px">${w.name}</div>
+        <div style="font-size:12px;color:var(--text3);font-family:var(--mono)">${w.mat} · ${w.fn}</div>
+      </div>
+      ${w.facial?'<span class="badge b-g" style="font-size:10px">Facial ✓</span>':'<span class="badge b-w" style="font-size:10px">Sem facial</span>'}
+    </div>`).join('');
+}
+
+// ===================== SELEÇÃO DO COLABORADOR =====================
+let curWk=null, curEpis=[], fotoUrl=null, fotoStream=null;
+
+function selecionarWk(id) {
+  const db=load();
+  curWk=db.workers.find(w=>w.id===id);
+  curEpis=db.epis[curWk.fn]||[];
+  fotoUrl=null; pararFotoCam();
+
+  const hoje=new Date().toDateString();
+  const jaReg=db.regs.some(r=>r.wid===id&&new Date(r.ts).toDateString()===hoje);
+
+  document.getElementById('wk-hdr').innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px">
+      ${curWk.facial?`<img src="${curWk.facial.foto}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:3px solid var(--accent);flex-shrink:0"/>`:`<div class="avatar ${curWk.cor}" style="width:56px;height:56px;font-size:18px">${curWk.ini}</div>`}
+      <div style="flex:1">
+        <div style="font-size:18px;font-weight:600;color:var(--accent)">${curWk.name}</div>
+        <div style="font-size:13px;color:var(--text2);font-family:var(--mono)">${curWk.mat} · ${curWk.fn}</div>
+        <div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">
+          ${jaReg?'<span class="badge b-w">Já registrou hoje</span>':'<span class="badge b-g">Pendente hoje</span>'}
+          ${curWk.facial?'<span class="badge b-g" style="font-size:10px">Facial cadastrada</span>':'<span class="badge b-r" style="font-size:10px">Sem facial</span>'}
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('epi-list').innerHTML=curEpis.map((e,i)=>{
+    const vs=vencStatus(e.venc);
+    const bLeft=vs&&vs.status!=='ok'?(vs.status==='vencido'?'border-left:3px solid var(--danger)':'border-left:3px solid var(--warn)'):'';
+    return `<div class="epi-check" id="ep-${i}" onclick="toggleEpi(${i})" style="${bLeft}">
+      <div class="chk"><svg class="chk-ic" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#001a0e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
+          <span style="font-size:14px;color:var(--text)">${e.n}</span>
+          ${vs?`<span class="venc-badge ${vs.cls}">${vs.label}</span>`:''}
+        </div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${e.ca}${e.venc?' · '+new Date(e.venc+'T00:00:00').toLocaleDateString('pt-BR'):''}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // reset foto
+  document.getElementById('vid-foto').style.display='none';
+  document.getElementById('cnv-foto').style.display='none';
+  document.getElementById('img-foto').style.display='none';
+  document.getElementById('ph-foto').style.display='flex';
+  document.getElementById('btn-foto-cam').textContent='Abrir câmera';
+  document.getElementById('btn-foto-cam').onclick=toggleFotoCam;
+  document.getElementById('btn-foto-cap').style.display='none';
+
+  updProg();
+  document.getElementById('s-identificar').style.display='none';
+  document.getElementById('s-epi').style.display='block';
+  document.getElementById('s-suc').style.display='none';
+}
+
+function toggleEpi(i) { document.getElementById('ep-'+i)?.classList.toggle('checked'); updProg(); }
+
+function updProg() {
+  const tot=curEpis.length;
+  const chk=document.querySelectorAll('[id^=ep-].checked').length;
+  document.getElementById('epi-prog').textContent=chk+' / '+tot+' EPIs marcados';
+  document.getElementById('btn-conf').disabled=!(chk===tot&&tot>0);
+}
+
+// ===================== FOTO COMPROVANTE =====================
+async function toggleFotoCam() {
+  if (fotoStream) { pararFotoCam(); return; }
+  try {
+    fotoStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});
+    const v=document.getElementById('vid-foto');
+    v.srcObject=fotoStream; v.style.display='block';
+    document.getElementById('ph-foto').style.display='none';
+    document.getElementById('img-foto').style.display='none';
+    document.getElementById('btn-foto-cam').textContent='Cancelar';
+    document.getElementById('btn-foto-cap').style.display='block';
+  } catch { toast('Câmera indisponível. Use "Celular".','warn'); }
+}
+
+function pararFotoCam() {
+  if (fotoStream) { fotoStream.getTracks().forEach(t=>t.stop()); fotoStream=null; }
+  document.getElementById('vid-foto').style.display='none';
+  document.getElementById('btn-foto-cam').textContent='Abrir câmera';
+  document.getElementById('btn-foto-cam').onclick=toggleFotoCam;
+  document.getElementById('btn-foto-cap').style.display='none';
+  if (!fotoUrl) document.getElementById('ph-foto').style.display='flex';
+}
+
+function capturarFoto() {
+  const v=document.getElementById('vid-foto');
+  const c=document.getElementById('cnv-foto');
+  c.width=v.videoWidth||640; c.height=v.videoHeight||480;
+  c.getContext('2d').drawImage(v,0,0);
+  fotoUrl=c.toDataURL('image/jpeg',0.85);
+  pararFotoCam();
+  c.style.display='block';
+  document.getElementById('ph-foto').style.display='none';
+  document.getElementById('btn-foto-cam').textContent='Refazer';
+  document.getElementById('btn-foto-cam').onclick=()=>{c.style.display='none';fotoUrl=null;document.getElementById('ph-foto').style.display='flex';document.getElementById('btn-foto-cam').textContent='Abrir câmera';document.getElementById('btn-foto-cam').onclick=toggleFotoCam;};
+}
+
+function fotoArquivo(input) {
+  const file=input.files[0]; if (!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    fotoUrl=ev.target.result;
+    const img=document.getElementById('img-foto');
+    img.src=fotoUrl; img.style.display='block';
+    document.getElementById('ph-foto').style.display='none';
+    document.getElementById('vid-foto').style.display='none';
+    document.getElementById('cnv-foto').style.display='none';
+    document.getElementById('btn-foto-cap').style.display='none';
+    document.getElementById('btn-foto-cam').textContent='Refazer';
+    document.getElementById('btn-foto-cam').onclick=()=>{img.style.display='none';img.src='';fotoUrl=null;document.getElementById('ph-foto').style.display='flex';document.getElementById('btn-foto-cam').textContent='Abrir câmera';document.getElementById('btn-foto-cam').onclick=toggleFotoCam;};
+  };
+  reader.readAsDataURL(file);
+  input.value='';
+}
+
+// ===================== CONFIRMAR =====================
+function confirmar() {
+  const db=load();
+  const epis=curEpis.filter((_,i)=>document.getElementById('ep-'+i)?.classList.contains('checked')).map(e=>e.n);
+  const ts=Date.now();
+  const reg={id:genId(),wid:curWk.id,wn:curWk.name,wf:curWk.fn,wi:curWk.ini,wc:curWk.cor,epis,foto:fotoUrl,hash:genHash(curWk.id+ts),ts};
+  db.regs.unshift(reg); save(db);
+
+  document.getElementById('suc-nm').textContent=curWk.name;
+  document.getElementById('suc-tm').textContent=new Date(ts).toLocaleString('pt-BR');
+  document.getElementById('suc-hash').textContent='ID: '+reg.hash;
+  document.getElementById('suc-foto-el').innerHTML=fotoUrl
+    ?`<img src="${fotoUrl}" style="width:110px;height:82px;object-fit:cover;border-radius:var(--radius);border:1px solid var(--border2);cursor:pointer" onclick="verFoto('${curWk.name}','${fotoUrl}')"/>`
+    :'<div style="font-size:12px;color:var(--text3);font-family:var(--mono)">Sem foto</div>';
+  document.getElementById('suc-epis').innerHTML=
+    '<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:8px">EPIS RETIRADOS</div>'+
+    epis.map(e=>`<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);margin-bottom:6px"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l4 4 6-7" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>${e}</div>`).join('');
+
+  pararFotoCam();
+  document.getElementById('s-epi').style.display='none';
+  document.getElementById('s-suc').style.display='block';
+  renderRecent(); updatePendBadge();
+  toast('Retirada registrada!','ok');
+}
+
+function voltarIdentificar() {
+  pararFotoCam();
+  document.getElementById('s-epi').style.display='none';
+  document.getElementById('s-identificar').style.display='block';
+  document.getElementById('busca-inp').value='';
+  document.getElementById('busca-res').innerHTML='';
+}
+
+function novoReg() {
+  pararFotoCam();
+  document.getElementById('s-suc').style.display='none';
+  document.getElementById('s-identificar').style.display='block';
+  document.getElementById('busca-inp').value='';
+  document.getElementById('busca-res').innerHTML='';
+}
+
+function renderRecent() {
+  const db=load(), el=document.getElementById('recent-list');
+  const rec=db.regs.slice(0,4);
+  if (!rec.length) { el.innerHTML='<div style="font-size:12px;color:var(--text3)">Nenhum registro ainda.</div>'; return; }
+  el.innerHTML=rec.map(r=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+    <div class="avatar ${r.wc}" style="width:30px;height:30px;font-size:11px">${r.wi}</div>
+    <div style="flex:1"><div style="font-size:13px;color:var(--text)">${r.wn}</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${new Date(r.ts).toLocaleString('pt-BR')}</div></div>
+    <span class="badge b-g">${r.epis.length} EPIs</span>
+  </div>`).join('');
+}
+
+// ===================== HISTÓRICO =====================
+function limparFiltros() { document.getElementById('hist-de').value=''; document.getElementById('hist-ate').value=''; document.getElementById('hist-nome').value=''; renderHist(); }
+
+function renderHist() {
+  const db=load();
+  const de=document.getElementById('hist-de').value, ate=document.getElementById('hist-ate').value, nome=document.getElementById('hist-nome').value.toLowerCase().trim();
+  let regs=db.regs;
+  if (de)   regs=regs.filter(r=>r.ts>=new Date(de+'T00:00:00').getTime());
+  if (ate)  regs=regs.filter(r=>r.ts<=new Date(ate+'T23:59:59').getTime());
+  if (nome) regs=regs.filter(r=>r.wn.toLowerCase().includes(nome));
+  document.getElementById('hist-count').textContent=regs.length+' registro(s)';
+  const el=document.getElementById('hist-lista');
+  if (!regs.length) { el.innerHTML='<div style="font-size:13px;color:var(--text3);padding:20px 0;text-align:center">Nenhum registro.</div>'; return; }
+  el.innerHTML=regs.map(r=>`<div class="hist-item" onclick="verRegistro('${r.id}')">
+    ${r.foto?`<img class="hist-photo" src="${r.foto}" style="pointer-events:none"/>`:`<div class="hist-ph">SEM<br>FOTO</div>`}
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:500;font-size:14px">${r.wn}</div>
+      <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${new Date(r.ts).toLocaleString('pt-BR')} · ${r.wf}</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.epis.join(' · ')}</div>
+    </div>
+    <span style="color:var(--text3);font-size:18px;padding-left:8px;flex-shrink:0">›</span>
+  </div>`).join('');
+}
+
+function verRegistro(id) {
+  const db=load(), r=db.regs.find(x=>x.id===id); if (!r) return;
+  document.getElementById('m-reg-titulo').textContent=r.wn;
+  document.getElementById('m-reg-body').innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div class="avatar ${r.wc}" style="width:48px;height:48px;font-size:16px">${r.wi}</div>
+      <div><div style="font-weight:500;font-size:16px">${r.wn}</div><div style="font-size:12px;color:var(--text3);font-family:var(--mono)">${r.wf}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <div style="background:var(--bg3);border-radius:var(--radius);padding:10px"><div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:3px">DATA/HORA</div><div style="font-size:13px;font-weight:500">${new Date(r.ts).toLocaleString('pt-BR')}</div></div>
+      <div style="background:var(--bg3);border-radius:var(--radius);padding:10px"><div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:3px">TOTAL EPIs</div><div style="font-size:13px;font-weight:500">${r.epis.length} retirados</div></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:8px">EPIs RETIRADOS</div>
+      ${r.epis.map(e=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--accent-dim2);border:1px solid rgba(0,229,160,.15);border-radius:var(--radius);margin-bottom:6px"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l4 4 6-7" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font-size:13px">${e}</span></div>`).join('')}
+    </div>
+    ${r.foto?`<div style="margin-bottom:14px"><div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:8px">FOTO</div><img src="${r.foto}" style="width:100%;border-radius:var(--radius);border:1px solid var(--border2);cursor:pointer" onclick="verFoto('${r.wn}','${r.foto}')"/></div>`:`<div style="padding:10px;background:var(--bg3);border-radius:var(--radius);font-size:12px;color:var(--text3);margin-bottom:14px">Sem foto</div>`}
+    <div style="padding:10px 12px;background:var(--bg3);border-radius:var(--radius);font-family:var(--mono);font-size:11px;color:var(--text3);word-break:break-all">ID: ${r.hash}</div>`;
+  openModal('m-reg');
+}
+
+function exportCSV() {
+  const db=load();
+  const rows=[['ID','Colaborador','Função','Data/Hora','EPIs','Hash']];
+  db.regs.forEach(r=>rows.push([r.id,r.wn,r.wf,new Date(r.ts).toLocaleString('pt-BR'),r.epis.join('; '),r.hash]));
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a'); a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv); a.download='epi_'+new Date().toISOString().slice(0,10)+'.csv'; a.click(); toast('CSV exportado!','ok');
+}
+
+// ===================== PENDENTES =====================
+function renderPend() {
+  const db=load(), hoje=new Date().toDateString();
+  const comReg=new Set(db.regs.filter(r=>new Date(r.ts).toDateString()===hoje).map(r=>r.wid));
+  const pend=db.workers.filter(w=>w.ativo&&!comReg.has(w.id));
+  const el=document.getElementById('pend-lista');
+  if (!pend.length) { el.innerHTML='<div style="text-align:center;padding:28px 0"><div style="font-size:36px;color:var(--accent);font-weight:600">✓</div><div style="font-size:14px;color:var(--text2);margin-top:8px">Todos retiraram EPIs hoje!</div></div>'; return; }
+  el.innerHTML=pend.map(w=>`<div class="pend-item">
+    <div style="display:flex;align-items:center;gap:10px">
+      ${w.facial?`<img src="${w.facial.foto}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid var(--danger)"/>`:`<div class="avatar ${w.cor}" style="width:34px;height:34px;font-size:12px">${w.ini}</div>`}
+      <div><div style="font-weight:500;font-size:14px">${w.name}</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${w.mat} · ${w.fn}</div></div>
+    </div><span class="badge b-r">Pendente</span>
+  </div>`).join('');
+}
+
+function updatePendBadge() {
+  const db=load(), hoje=new Date().toDateString();
+  const comReg=new Set(db.regs.filter(r=>new Date(r.ts).toDateString()===hoje).map(r=>r.wid));
+  const n=db.workers.filter(w=>w.ativo&&!comReg.has(w.id)).length;
+  document.getElementById('pend-badge').innerHTML=n>0?`<span class="badge b-r" style="margin-left:4px;font-size:10px">${n}</span>`:'';
+}
+
+// ===================== DASHBOARD =====================
+function renderDash() {
+  const db=load(), hoje=new Date(); hoje.setHours(0,0,0,0);
+  const hojeTs=hoje.getTime(), day=86400000;
+  const hojeRegs=db.regs.filter(r=>r.ts>=hojeTs);
+  const comReg=new Set(hojeRegs.map(r=>r.wid));
+  const pend=db.workers.filter(w=>w.ativo&&!comReg.has(w.id)).length;
+  const semFacial=db.workers.filter(w=>w.ativo&&!w.facial).length;
+  let vencCnt=0; Object.values(db.epis).forEach(l=>l.forEach(e=>{const vs=vencStatus(e.venc);if(vs&&vs.status!=='ok')vencCnt++;}));
+
+  document.getElementById('dash-stats').innerHTML=`
+    <div class="dash-stat"><div class="dash-val" style="color:var(--accent)">${hojeRegs.length}</div><div class="dash-lbl">Registros hoje</div></div>
+    <div class="dash-stat"><div class="dash-val" style="color:var(--danger)">${pend}</div><div class="dash-lbl">Pendentes hoje</div></div>
+    <div class="dash-stat"><div class="dash-val" style="color:var(--info)">${db.workers.filter(w=>w.ativo).length}</div><div class="dash-lbl">Colaboradores ativos</div></div>
+    <div class="dash-stat"><div class="dash-val" style="color:var(--warn)">${semFacial}</div><div class="dash-lbl">Sem facial cadastrada</div></div>`;
+
+  const dias=[];
+  for(let i=6;i>=0;i--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);const s=d.getTime();dias.push({lbl:d.toLocaleDateString('pt-BR',{weekday:'short'}).slice(0,3),cnt:db.regs.filter(r=>r.ts>=s&&r.ts<s+day).length,today:i===0});}
+  const mx=Math.max(...dias.map(d=>d.cnt),1);
+  document.getElementById('chart-dias').innerHTML=dias.map(d=>`<div class="bar-col"><div style="font-size:10px;color:var(--text2);font-family:var(--mono)">${d.cnt||''}</div><div class="bar ${d.today?'hl':''}" style="height:${Math.round(d.cnt/mx*60)+4}px"></div><div class="bar-lbl">${d.lbl}</div></div>`).join('');
+
+  const epiCnt={};
+  db.regs.forEach(r=>r.epis.forEach(e=>{epiCnt[e]=(epiCnt[e]||0)+1;}));
+  const top=Object.entries(epiCnt).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const mxe=top[0]?.[1]||1;
+  document.getElementById('chart-epis').innerHTML=top.map(([n,c])=>`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="color:var(--text2)">${n}</span><span style="color:var(--text3);font-family:var(--mono)">${c}x</span></div><div style="height:5px;background:var(--bg4);border-radius:3px"><div style="height:5px;background:var(--accent-dim);border-radius:3px;width:${Math.round(c/mxe*100)}%"></div></div></div>`).join('');
+
+  document.getElementById('dash-tbody').innerHTML=db.regs.slice(0,50).map(r=>`<tr style="cursor:pointer" onclick="verRegistro('${r.id}')">
+    <td><div style="display:flex;align-items:center;gap:8px"><div class="avatar ${r.wc}" style="width:26px;height:26px;font-size:10px">${r.wi}</div>${r.wn}</div></td>
+    <td style="font-family:var(--mono);font-size:11px">${new Date(r.ts).toLocaleString('pt-BR')}</td>
+    <td>${r.wf}</td><td>${r.epis.length}</td>
+    <td>${r.foto?`<span class="badge b-g" style="cursor:pointer" onclick="event.stopPropagation();verFoto('${r.wn}','${r.foto}')">Ver</span>`:'<span class="badge b-gray">—</span>'}</td>
+  </tr>`).join('');
+}
+
+// ===================== ADMIN =====================
+function renderAdm() {
+  const db=load();
+  document.getElementById('adm-wk').innerHTML=db.workers.map(w=>`
+    <div class="adm-item">
+      ${w.facial?`<img src="${w.facial.foto}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);flex-shrink:0"/>`:`<div class="avatar ${w.cor}" style="width:44px;height:44px;font-size:13px">${w.ini}</div>`}
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:500;font-size:14px">${w.name}</div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${w.mat} · ${w.fn}</div>
+        <div style="margin-top:3px;display:flex;gap:4px;flex-wrap:wrap">
+          <span class="badge ${w.ativo?'b-g':'b-r'}">${w.ativo?'Ativo':'Inativo'}</span>
+          <span class="badge ${w.facial?'b-g':'b-r'}" style="font-size:10px">${w.facial?'Facial ✓':'Sem facial'}</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">
+        <button class="btn btn-p btn-sm" onclick="abrirCadFacial('${w.id}')" style="font-size:11px;padding:5px 12px">${w.facial?'Renovar facial':'Cadastrar facial'}</button>
+        <button class="btn btn-g btn-sm" onclick="toggleWk('${w.id}')" style="font-size:11px;padding:5px 12px">${w.ativo?'Desativar':'Ativar'}</button>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('adm-usr').innerHTML=db.users.map(u=>`
+    <div class="adm-item">
+      <div class="avatar av-b" style="width:32px;height:32px;font-size:12px">${u.username[0].toUpperCase()}</div>
+      <div style="flex:1"><div style="font-weight:500;font-size:14px">${u.username}</div></div>
+      <span class="badge ${u.role==='admin'?'b-w':'b-b'}">${u.role}</span>
+    </div>`).join('');
+
+  document.getElementById('adm-epis').innerHTML=Object.entries(db.epis).map(([fn,lista])=>`
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:8px;font-weight:600">${fn.toUpperCase()}</div>
+      ${lista.map((e,i)=>{
+        const vs=vencStatus(e.venc);
+        const bLeft=vs&&vs.status!=='ok'?(vs.status==='vencido'?'border-left:3px solid var(--danger)':'border-left:3px solid var(--warn)'):'';
+        return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:var(--radius);margin-bottom:6px;${bLeft}">
+          <div style="flex:1"><div style="font-size:13px;font-weight:500">${e.n}</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono)">${e.ca}</div></div>
+          <div style="text-align:right;flex-shrink:0">
+            ${vs?`<div class="venc-badge ${vs.cls}" style="margin-bottom:4px;display:block">${vs.label}</div>`:''}
+            <input type="date" value="${e.venc||''}" onchange="salvarVenc('${fn}',${i},this.value)" style="padding:4px 8px;font-size:12px;width:140px;background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--text)"/>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+}
+
+// ===================== CADASTRO FACIAL =====================
+let cadWkId=null, cadEmb=null, cadFotoUrl=null;
+
+function abrirCadFacial(id) {
+  cadWkId=id; cadEmb=null; cadFotoUrl=null;
+  const w=load().workers.find(x=>x.id===id);
+  document.getElementById('m-fac-titulo').textContent=(w.facial?'Renovar':'Cadastrar')+' facial — '+w.name;
+  document.getElementById('cad-salvar').disabled=true;
+  document.getElementById('cad-msg').textContent='';
+  document.getElementById('cad-preview-wrap').style.display='none';
+  document.getElementById('cad-empty').style.display='flex';
+  document.getElementById('cad-file-cam').value='';
+  document.getElementById('cad-file-galeria').value='';
+  openModal('m-facial');
+}
+
+function fecharFacial() { closeModal('m-facial'); }
+
+async function cadFotoSelecionada(input) {
+  const file=input.files[0]; if (!file) return;
+  const reader=new FileReader();
+  reader.onload=async ev=>{
+    cadFotoUrl=ev.target.result;
+    // mostra preview
+    document.getElementById('cad-prev-img').src=cadFotoUrl;
+    document.getElementById('cad-preview-wrap').style.display='block';
+    document.getElementById('cad-empty').style.display='none';
+    const msg=document.getElementById('cad-msg');
+    msg.style.color='var(--text3)'; msg.textContent='Processando...';
+
+    if (!faceReady) {
+      cadEmb=null;
+      msg.style.color='var(--warn)';
+      msg.textContent='⚠ Modo offline — foto salva sem biometria. Identificação automática indisponível.';
+      document.getElementById('cad-salvar').disabled=false;
+      return;
+    }
+
+    // Tenta extrair biometria
+    const img=new Image(); img.src=cadFotoUrl;
+    await new Promise(r=>img.onload=r);
+    const emb=await getEmb(img);
+    if (emb) {
+      cadEmb=emb;
+      msg.style.color='var(--accent)';
+      msg.textContent='✓ Rosto detectado! Clique em Salvar facial.';
+    } else {
+      cadEmb=null;
+      msg.style.color='var(--warn)';
+      msg.textContent='Rosto não detectado automaticamente — será salvo como foto de referência.';
+    }
+    document.getElementById('cad-salvar').disabled=false;
+  };
+  reader.readAsDataURL(file);
+  input.value='';
+}
+
+function salvarFacial() {
+  const db=load(), w=db.workers.find(x=>x.id===cadWkId); if (!w) return;
+  w.facial={foto:cadFotoUrl, embedding:cadEmb, dt:new Date().toISOString()};
+  save(db); closeModal('m-facial'); renderAdm();
+  toast('Facial cadastrada para '+w.name+'!','ok');
+}
+
+function salvarVenc(fn,idx,val) {
+  const db=load();
+  if (db.epis[fn]?.[idx]) { db.epis[fn][idx].venc=val; save(db); renderAdm(); checkAlertas(); toast('Vencimento atualizado!','ok'); }
+}
+
+function toggleWk(id) {
+  const db=load(), w=db.workers.find(x=>x.id===id); if (w) w.ativo=!w.ativo;
+  save(db); renderAdm(); updatePendBadge(); toast(`${w.name} ${w.ativo?'ativado':'desativado'}.`,'ok');
+}
+
+function salvarWk() {
+  const db=load(), nm=document.getElementById('nw-nm').value.trim(), mt=document.getElementById('nw-mt').value.trim(), fn=document.getElementById('nw-fn').value;
+  if (!nm||!mt) { toast('Preencha nome e matrícula','err'); return; }
+  if (db.workers.find(w=>w.mat===mt)) { toast('Matrícula já cadastrada','err'); return; }
+  const cors=['av-g','av-b','av-o','av-r','av-p'], ini=nm.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
+  db.workers.push({id:genId(),mat:mt,name:nm,fn,ini,cor:cors[db.workers.length%cors.length],ativo:true,facial:null});
+  save(db); closeModal('m-wk'); renderAdm();
+  document.getElementById('nw-nm').value=''; document.getElementById('nw-mt').value='';
+  toast('Colaborador cadastrado!','ok');
+}
+
+function salvarUsr() {
+  const db=load(), u=document.getElementById('nu-u').value.trim(), p=document.getElementById('nu-p').value, r=document.getElementById('nu-r').value;
+  if (!u||p.length<6) { toast('Usuário e senha (mín. 6 chars)','err'); return; }
+  if (db.users.find(x=>x.username===u)) { toast('Usuário já existe','err'); return; }
+  db.users.push({id:genId(),username:u,pw:p,role:r}); save(db); closeModal('m-usr'); renderAdm();
+  document.getElementById('nu-u').value=''; document.getElementById('nu-p').value='';
+  toast('Usuário criado!','ok');
+}
+
+function limparRegs() {
+  if (!confirm('Apagar TODOS os registros? Colaboradores e faciais são mantidos.')) return;
+  const db=load(); db.regs=[]; save(db); renderRecent(); updatePendBadge(); toast('Registros apagados.','ok');
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+function verFoto(nm,url) { document.getElementById('m-foto-tit').textContent=nm; document.getElementById('m-foto-img').src=url; openModal('m-foto'); }
+function toast(msg,tp='ok') {
+  const el=document.createElement('div'); el.className='toast '+tp;
+  const cor=tp==='ok'?'var(--accent)':tp==='warn'?'var(--warn)':'var(--danger)';
+  el.innerHTML=`<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="${cor}" stroke-width="1.5"/><path d="${tp==='ok'?'M4 7l2 2 4-4':'M4 4l6 6M10 4l-6 6'}" stroke="${cor}" stroke-width="1.5" stroke-linecap="round"/></svg>${msg}`;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
+
+loadModels();
+</script>
+</body>
+</html>
